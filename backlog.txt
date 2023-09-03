@@ -1,0 +1,31 @@
+[TO DO]
+Setting up simulation:
+- Inputs:
+  - Have to specify a symbol
+  - Have to specify a duration in months
+    - If start date + duration more than latest record trim simulation with
+    warning
+  - Can specify a minimum start date
+    - If start date before earliest record error
+  - Can specify a maximum start date
+    - If start date after latest record error
+  - Can specify number of iterations
+    - If number of iterations less than error
+  - Have to define a test investment strategy that for each day in the simulation
+  can buy/sell
+    - Biased cost averaging
+  - Can define one or more benchmark investment strategies
+Running the simulation:
+- Wallet value is updated
+Assessing performance:
+- Plot distribution of final ROI: one chart with multiple histograms.
+- Plot ROI over time: average + 2sd + 3sd + min + max
+
+
+
+
+
+[DONE]
+- Investing lump sum means investing the entire amount in the first day
+- Simple cost averaging means investing a fixed amount at the first working
+day of each month
