@@ -25,7 +25,7 @@ class TestLumpSumInvestmentStrategy:
 
         history = StockHistory({date(2023, 1, 1): 100})
         strategy.trade(history)
-        history.add(date(2023, 1, 2), 200)
+        history.move()
         strategy.trade(history)
 
         strategy.stock_position.buy_value.assert_called_once_with(
@@ -68,23 +68,25 @@ class TestBiasedCostAveragingInvestmentStrategy:
         strategy.stock_position.buy_value.assert_not_called()
 
     def test_if_stock_dropped_5_percent_or_more_then_buy_10_percent_more(self):
+        # Simulate a 5% drop in the stock price
         strategy = BiasedCostAveragingInvestmentStrategy(
             MagicMock(), sum_to_invest=100, lookback_days=14
         )
-
         first_working_day_jan_2023 = date(2023, 1, 2)
         two_weeks_before = first_working_day_jan_2023 - timedelta(days=14)
         reference_price = 10
         current_price = reference_price * (1 - 0.05)
-        strategy.trade(
-            StockHistory(
-                {
-                    two_weeks_before: reference_price,
-                    first_working_day_jan_2023: current_price,
-                }
-            )
+        history = StockHistory(
+            {
+                two_weeks_before: reference_price,
+                first_working_day_jan_2023: current_price,
+            }
         )
+        history.set_cursor_to(first_working_day_jan_2023)
 
+        strategy.trade(history)
+
+        # 10% more than the sum invested
         strategy.stock_position.buy_value.assert_called_with(
             value=100 * 1.1, market_price=current_price
         )

@@ -15,7 +15,7 @@ class LumpSumInvestmentStrategy:
             return
         self.stock_position.buy_value(
             value=self.sum_to_invest,
-            market_price=stock_history.latest_value,
+            market_price=stock_history.current_value,
         )
         self.has_invested = True
 
@@ -26,9 +26,9 @@ class CostAveragingInvestmentStrategy:
         self.sum_to_invest = sum_to_invest
 
     def trade(self, stock_history: StockHistory) -> None:
-        if not self.is_first_working_day_of_month(stock_history.latest_date):
+        if not self.is_first_working_day_of_month(stock_history.current_date):
             return
-        self.stock_position.buy_value(self.sum_to_invest, stock_history.latest_value)
+        self.stock_position.buy_value(self.sum_to_invest, stock_history.current_value)
 
     @staticmethod
     def is_first_working_day_of_month(date: date) -> bool:
@@ -55,11 +55,11 @@ class BiasedCostAveragingInvestmentStrategy:
         self.lookback_days = lookback_days
 
     def trade(self, stock_history: StockHistory) -> None:
-        if not self.is_first_working_day_of_month(stock_history.latest_date):
+        if not self.is_first_working_day_of_month(stock_history.current_date):
             return
         amount_to_buy = self._compute_amount_to_buy(stock_history)
         self.stock_position.buy_value(
-            value=amount_to_buy, market_price=stock_history.latest_value
+            value=amount_to_buy, market_price=stock_history.current_value
         )
 
     def _compute_amount_to_buy(self, stock_history: StockHistory) -> float:
@@ -69,7 +69,9 @@ class BiasedCostAveragingInvestmentStrategy:
         except KeyError:
             return self.sum_to_invest
 
-        change = stock_history.latest_value / reference_price - 1
+        change = stock_history.current_value / reference_price - 1
+        if change < -0.10:
+            return self.sum_to_invest * 1.2
         if change < -0.05:
             return self.sum_to_invest * 1.1
         return self.sum_to_invest
