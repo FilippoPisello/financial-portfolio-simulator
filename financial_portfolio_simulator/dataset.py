@@ -1,47 +1,57 @@
 from abc import ABC, abstractmethod
-from datetime import date, datetime, timedelta
+from dataclasses import dataclass
+from datetime import date, timedelta
 from random import randint
+
+import numpy as np
+import yfinance
+
+
+@dataclass
+class SimulationParameters:
+    ticker: str
+    start_date: date
+    end_date: date
+
+
+def generate_randomized_parameters(
+    ticker: str,
+    min_start_date: date,
+    max_start_date: date,
+    number_of_financial_periods: int,
+) -> SimulationParameters:
+    start_date = _generate_random_start_date(min_start_date, max_start_date)
+    end_date = _calculate_end_date(start_date, number_of_financial_periods)
+    return SimulationParameters(
+        ticker=ticker,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+
+def _generate_random_start_date(min_start_date: date, max_start_date: date) -> str:
+    # Get the difference between the two dates in days
+    delta = (max_start_date - min_start_date).days
+    # Pick a random date in that range
+    random_number_of_days = randint(0, delta)
+    return min_start_date + timedelta(days=random_number_of_days)
+
+
+def _calculate_end_date(start_date: date, number_of_financial_periods: int) -> str:
+    return start_date + timedelta(days=7 * 4 * number_of_financial_periods)
 
 
 class StockDataDownloader(ABC):
     @abstractmethod
-    def download(self, ticker, start_date, end_date):
+    def download(self, ticker: str, start_date: date, end_date: date) -> np.ndarray:
         pass
 
 
-def generate_datasets(
-    downloader: StockDataDownloader,
-    ticker: str,
-    min_starting_date: str,
-    max_starting_date: str,
-    number_of_financial_periods: int,
-    number_of_simulations: int,
-) -> list[list[float]]:
-    datasets = []
-    for _ in range(number_of_simulations):
-        start_date = _generate_random_start_date(min_starting_date, max_starting_date)
-        end_date = _calculate_end_date(start_date, number_of_financial_periods)
-        dataset = downloader.download(
-            ticker=ticker,
-            start_date=start_date,
-            end_date=end_date,
+class YahooFinanceDataDownloader(StockDataDownloader):
+    def download(self, ticker: str, start_date: date, end_date: date) -> np.ndarray:
+        str_start_date = start_date.strftime("%Y-%m-%d")
+        str_end_date = end_date.strftime("%Y-%m-%d")
+        df = yfinance.download(
+            ticker, start=str_start_date, end=str_end_date, progress=False
         )
-        datasets.append(dataset)
-    return datasets
-
-
-def _generate_random_start_date(min_starting_date: str, max_starting_date: str) -> str:
-    lower_limit = datetime.strptime(min_starting_date, "%Y-%m-%d")
-    upper_limit = datetime.strptime(max_starting_date, "%Y-%m-%d")
-    # Number of days between the two dates
-    delta = (upper_limit - lower_limit).days
-    random_number_of_days = randint(0, delta)
-    # Add the random number of days to the lower limit
-    random_date = lower_limit + timedelta(days=random_number_of_days)
-    return random_date.strftime("%Y-%m-%d")
-
-
-def _calculate_end_date(start_date: str, number_of_financial_periods: int) -> str:
-    start_date = datetime.strptime(start_date, "%Y-%m-%d")
-    end_date = start_date + timedelta(days=7 * 4 * number_of_financial_periods)
-    return end_date.strftime("%Y-%m-%d")
+        return df["Close"].reset_index(drop=True).to_numpy()

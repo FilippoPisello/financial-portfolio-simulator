@@ -1,0 +1,8 @@
+ticker: "^GSPC"
+min_start_date: "2000-01-01"
+max_start_date: "2013-01-01"
+number_of_financial_periods: 130
+strategies:
+  lump_sum:
+    amount: 10000
+number_of_simulations: 10

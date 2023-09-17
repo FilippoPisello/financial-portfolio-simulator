@@ -1,11 +1,29 @@
 [TO DO]
-DATASET CREATION
-- Len of each dataset is aligned by repeating the last value as many times as
+CONFIG
+- Passed strategies must exist
+
+[DOING]
+
+
+[DONE]
+OUTPUT CREATION
+- Aggregated returns consists of a dataframe per strategy:
+    - Invested amount min, -2sd, median, +2sd, max
+    - Countervalue min, -2sd, median, +2sd, max
+    - ROI min, -2sd, median, +2sd, max
+- Len of each returns is aligned by repeating the last value as many times as
 needed
-- Too much date conversion around
 
-- Randomization of parameters and dataset creation should be split
+SIMULATION
+- Lump sum investment invests everything at t0
+    - Investment = total investment at t0
+    - Investment is constant in every other period
+    - Countervalue per period is equal to amount investment times change in share
+    price
+    - ROI is equal to countervalue divided by investment
+    - Closing ROI is the last ROI
 
+DATASET CREATION
 - Starting date is not always the same
 - Data download function is always called with a date between min and max
 starting date
@@ -13,3 +31,5 @@ starting date
 - Data download function is called as many times as number of simulations
 - Starting and ending date of data download function are always
 4 * number_of_financial_periods weeks apart
+- Too much date conversion around
+- Randomization of parameters and dataset creation should be split

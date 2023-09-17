@@ -1,83 +1,67 @@
-from datetime import datetime
+from datetime import date
 from unittest.mock import Mock
 
-from financial_portfolio_simulator.dataset import generate_datasets
+from financial_portfolio_simulator.__main__ import run_simulations
+from financial_portfolio_simulator.config import ProjectConfig
+from financial_portfolio_simulator.dataset import generate_randomized_parameters
+
+SAMPLE_CONFIG = ProjectConfig(
+    ticker="AAPL",
+    min_start_date=date(2019, 1, 1),
+    max_start_date=date(2019, 1, 31),
+    number_of_financial_periods=2,
+    strategies=["lump_sum"],
+)
 
 
 def test_download_function_is_called_as_many_times_as_the_number_of_simulations():
     downloader = Mock()
-    generate_datasets(
-        downloader=downloader,
-        ticker="AAPL",
-        min_starting_date="2019-01-01",
-        max_starting_date="2019-01-03",
-        number_of_financial_periods=2,
-        number_of_simulations=3,
+    config = ProjectConfig.sample_config(number_of_simulations=3)
+    run_simulations(
+        config=config,
+        data_downloader=downloader,
     )
-    assert downloader.download.call_count == 3
+    assert downloader.download.call_count == config.number_of_simulations
 
 
-def test_number_of_datasets_returned_is_equal_to_the_number_of_simulations():
-    downloader = Mock()
-    downloader.download.return_value = [1, 2, 3]
+def test_download_is_always_called_with_start_date_between_min_and_max_start_date():
+    min_start_date = date(2019, 1, 1)
+    max_start_date = date(2019, 1, 31)
 
-    datasets = generate_datasets(
-        downloader=downloader,
-        ticker="AAPL",
-        min_starting_date="2019-01-01",
-        max_starting_date="2019-01-03",
-        number_of_financial_periods=2,
-        number_of_simulations=3,
-    )
-    assert len(datasets) == 3
-
-
-def test_download_is_always_called_with_start_date_between_min_and_max_starting_date():
-    downloader = Mock()
-    min_date = "2019-01-01"
-    max_date = "2019-01-03"
-
-    generate_datasets(
-        downloader=downloader,
-        ticker="AAPL",
-        min_starting_date=min_date,
-        max_starting_date=max_date,
-        number_of_financial_periods=2,
-        number_of_simulations=100,
-    )
-    for call in downloader.download.call_args_list:
-        start_date = call[1]["start_date"]
-        assert start_date >= min_date
-        assert start_date <= max_date
+    for _ in range(100):
+        parmeters = generate_randomized_parameters(
+            ticker="AAPL",
+            min_start_date=min_start_date,
+            max_start_date=max_start_date,
+            number_of_financial_periods=2,
+        )
+        assert min_start_date <= parmeters.start_date <= max_start_date
 
 
-def test_download_is_called_with_different_starting_dates():
+def test_download_is_called_with_different_start_dates():
     """This test proves that the starting date is randomized."""
-    downloader = Mock()
-    generate_datasets(
-        downloader=downloader,
-        ticker="AAPL",
-        min_starting_date="2019-01-01",
-        max_starting_date="2019-01-03",
-        number_of_financial_periods=2,
-        number_of_simulations=50,
-    )
-    start_dates = {call[1]["start_date"] for call in downloader.download.call_args_list}
+    start_dates = set()
+
+    for _ in range(100):
+        parmeters = generate_randomized_parameters(
+            ticker="AAPL",
+            min_start_date=date(2019, 1, 1),
+            max_start_date=date(2019, 1, 31),
+            number_of_financial_periods=2,
+        )
+        start_dates.add(parmeters.start_date)
+
     assert len(start_dates) > 1
 
 
-def test_download_start_and_end_date_are_always_4_times_the_number_of_financial_periods_apart():
-    downloader = Mock()
+def test_download_start_and_end_date_are_number_of_financial_periods_apart():
     number_of_financial_periods = 2
-    generate_datasets(
-        downloader=downloader,
-        ticker="AAPL",
-        min_starting_date="2019-01-01",
-        max_starting_date="2019-01-03",
-        number_of_financial_periods=number_of_financial_periods,
-        number_of_simulations=50,
-    )
-    for call in downloader.download.call_args_list:
-        start_date = datetime.strptime(call[1]["start_date"], "%Y-%m-%d")
-        end_date = datetime.strptime(call[1]["end_date"], "%Y-%m-%d")
-        assert (end_date - start_date).days == 7 * 4 * number_of_financial_periods
+    for _ in range(100):
+        parmeters = generate_randomized_parameters(
+            ticker="AAPL",
+            min_start_date=date(2019, 1, 1),
+            max_start_date=date(2019, 1, 31),
+            number_of_financial_periods=number_of_financial_periods,
+        )
+        duration = (parmeters.end_date - parmeters.start_date).days
+        assert duration == 7 * 4 * number_of_financial_periods
