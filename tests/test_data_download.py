@@ -7,10 +7,6 @@ import pandas as pd
 from financial_portfolio_simulator.dataset import YahooFinanceDataDownloader
 
 
-class TestYahooFinanceDataDownloader:
-    """Tests for the YahooFinanceDataDownloader class."""
-
-
 def test_yahoo_finance_download_is_called_with_dates_as_str():
     downloader = YahooFinanceDataDownloader()
     with patch("yfinance.download") as mock_download:
@@ -19,7 +15,9 @@ def test_yahoo_finance_download_is_called_with_dates_as_str():
             start_date=date(2019, 1, 1),
             end_date=date(2019, 1, 31),
         )
-        mock_download.assert_called_with("AAPL", start="2019-01-01", end="2019-01-31")
+        mock_download.assert_called_with(
+            "AAPL", start="2019-01-01", end="2019-01-31", progress=False
+        )
 
 
 def test_yahoo_finance_raw_output_is_parsed_correctly():

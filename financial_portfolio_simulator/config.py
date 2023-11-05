@@ -25,11 +25,7 @@ class ProjectConfig:
             "min_start_date": date(2019, 1, 1),
             "max_start_date": date(2019, 1, 31),
             "number_of_financial_periods": 26,
-            "strategies": {
-                "lump_sum": {
-                    "amount": 1000,
-                }
-            },
+            "strategies": {},
         } | kwargs
         return cls(**sample_input)
 
