@@ -5,6 +5,7 @@ from financial_portfolio_simulator.dataset import (
     YahooFinanceDataDownloader,
     generate_randomized_parameters,
 )
+from financial_portfolio_simulator.plots import make_plot_roi_distribution
 from financial_portfolio_simulator.returns import Returns, calculate_returns
 from financial_portfolio_simulator.statistics import (
     align_returns_length,
@@ -23,6 +24,7 @@ def main():
         aligned_results = align_returns_length(results)
         summary = compute_returns_statistics_over_time(aligned_results)
         save_dataframe_to_excel(summary, OUTPUT_DIR / "summary.xlsx", strategy_label)
+        make_plot_roi_distribution(aligned_results)
 
 
 def run_simulations(

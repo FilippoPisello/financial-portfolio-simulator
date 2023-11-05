@@ -20,8 +20,7 @@ class Returns:
 
     @property
     def amount_invested(self) -> np.ndarray:
-        # TODO: this will not work for strategies that invest more than once
-        return self.quantity_owned * self.stock_value[0]
+        return (self.units_transacted * self.stock_value).cumsum()
 
     @property
     def roi(self) -> np.ndarray:
@@ -30,6 +29,10 @@ class Returns:
     @property
     def countervalue(self) -> np.ndarray:
         return self.quantity_owned * self.stock_value
+
+    @property
+    def units_transacted(self) -> np.ndarray:
+        return np.diff(self.quantity_owned, prepend=0)
 
     @property
     def closing_roi(self) -> float:
@@ -52,6 +55,48 @@ class LumpSumStrategy:
         return np.full_like(stock_value, self.amount / stock_value[0])
 
 
+class CostAveragingStrategy:
+    def __init__(
+        self,
+        recurring_amount: float,
+        investing_frequency_days: int,
+        number_of_purchases: int,
+    ):
+        self.recurring_amount = recurring_amount
+        self.investing_frequency_days = investing_frequency_days
+        self.number_of_purchases = number_of_purchases
+
+    @property
+    def days_between_purchases(self) -> int:
+        return self.investing_frequency_days - 1
+
+    def compute_quantity_owned_over_time(self, stock_value: np.ndarray) -> Returns:
+        purchases = self._purchases()
+        # Pad purhcases with zeros to match the length of stock_value
+        purchases = self.align_purchases_length(stock_value, purchases)
+
+        units_owned = purchases / stock_value
+        return units_owned.cumsum()
+
+    def align_purchases_length(self, stock_value, purchases):
+        if len(purchases) < len(stock_value):
+            purchases = np.pad(
+                purchases,
+                (0, len(stock_value) - len(purchases)),
+                mode="constant",
+                constant_values=0,
+            )
+        else:
+            purchases = purchases[: len(stock_value)]
+        return purchases
+
+    def _purchases(self) -> np.ndarray:
+        one_purchase_period = [self.recurring_amount] + [0] * (
+            self.days_between_purchases
+        )
+        return np.tile(one_purchase_period, self.number_of_purchases)
+
+
 def strategy_factory(strategy_label: str):
-    strategies = {"lump_sum": LumpSumStrategy}
+    strategies = {"lump_sum": LumpSumStrategy, "cost_averaging": CostAveragingStrategy}
     return strategies[strategy_label]
